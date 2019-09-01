@@ -15,6 +15,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import model.services.DepartmentService;
 
 public class MainViewController implements Initializable {
 	
@@ -34,7 +35,7 @@ public class MainViewController implements Initializable {
 	
 	@FXML
 	public void onMenuItemDepartmentAction() {
-		loadView("/gui/DepartmentList.fxml");
+		loadView2("/gui/DepartmentList.fxml");
 	}
 	
 	@FXML
@@ -73,6 +74,42 @@ public class MainViewController implements Initializable {
 			
 			// adiciona todos os filhos do newVBox no children
 			mainVBox.getChildren().addAll(newVBox.getChildren());
+			
+		} catch (IOException e) {
+			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
+		}
+	}
+	
+	// temp
+	private synchronized void loadView2(String absoluteName) {
+		try {
+			// instancia uma nova tela
+			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
+			VBox newVBox = loader.load();
+			
+			// chama cena pra abrir o about dentro da janela principal
+			Scene mainScene = Main.getMainScene();
+			
+			// o getRoot pega a tag ScrollPane, por isto existe um casting pra isto
+			// o getContent pega o conteúdo do ScroolPane, que no caso é um VBox, por isto o casting
+			VBox mainVBox = (VBox)( (ScrollPane) mainScene.getRoot() ).getContent();
+			
+			// getChildren.get(0) pega o MenuBar
+			Node mainMenu = mainVBox.getChildren().get(0);
+			
+			// limpa todos os filhos do mainVBox
+			mainVBox.getChildren().clear();
+			
+			// adiciona somente o MenuBar no children
+			mainVBox.getChildren().add(mainMenu);
+			
+			// adiciona todos os filhos do newVBox no children
+			mainVBox.getChildren().addAll(newVBox.getChildren());
+			
+			// temporário, onde estou adicionando a dependência manualmente
+			DepartmentListController departmentController = loader.getController();
+			departmentController.setDepartmentService(new DepartmentService());
+			departmentController.updateTableView();
 			
 		} catch (IOException e) {
 			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
