@@ -50,7 +50,12 @@ public class DepartmentListController implements Initializable {
 	@FXML
 	public void onBtNewAction(ActionEvent event) {
 		Stage parentStage = Utils.currentStage(event);
-		createDialogForm("/gui/DepartmentForm.fxml", parentStage);
+		
+		// como estou criando um novo department, então o obj por enquanto vai carregar vazio
+		Department obj = new Department();
+		
+		// preciso injetar meu obj no DepartmentFormController, pra isto, vou passar ele como argumento no createDialog
+		createDialogForm(obj, "/gui/DepartmentForm.fxml", parentStage);
 	}
 	
 	// faço uma injeção de dependência, é uma boa prática, pois não instancio o departmentService na hora que declarei ele
@@ -95,12 +100,16 @@ public class DepartmentListController implements Initializable {
 	}
 	
 	// quando criamos uma janela de diálogo, temos que informar ela quem criou esta janela. Por isto do argumento Stage
-	private void createDialogForm(String absoluteName, Stage parentStage) {
+	private void createDialogForm(Department obj, String absoluteName, Stage parentStage) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
 			
 			// o form do Department é um AnchorPane então agora tenho que chamar o Pane em vez do VBox
 			Pane pane = loader.load();
+			
+			DepartmentFormController controller = loader.getController();
+			controller.setDepartment(obj);
+			controller.updateFormData();
 			
 			Stage dialogStage = new Stage();
 			dialogStage.setTitle("Enter Department Data");
