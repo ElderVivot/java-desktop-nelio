@@ -1,9 +1,12 @@
 package gui;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import db.DBException;
+import gui.listener.DataChangeListener;
 import gui.util.Alerts;
 import gui.util.Constraints;
 import gui.util.Utils;
@@ -24,7 +27,11 @@ public class DepartmentFormController implements Initializable {
 	// a 'popularização' é extremamente necessário principalmente quando já existe o department e vamos apenas alterá-lo
 	private Department entity;
 	
+	// o service é que vai gravar no BD os dados
 	private DepartmentService service;
+	
+	// o DataChangeListener recebe um objeto dos eventos que estão interessados em serem alterados
+	private List<DataChangeListener> dataChangeListener = new ArrayList<>();
 	
 	@FXML
 	private TextField txtId;
@@ -49,6 +56,11 @@ public class DepartmentFormController implements Initializable {
 		this.service = service;
 	}
 	
+	// insere um novo objeto que está interessado no padrão Observer pra ser atualizado automaticamente
+	public void subscribeDataChangeListener(DataChangeListener listener) {
+		dataChangeListener.add(listener);
+	}
+	
 	@FXML // pra poder fechar a janela preciso do parametro do ActionEvent
 	public void onBtSaveAction(ActionEvent event) {
 		// programação defensiva, vejo se estão nulo o entity e service
@@ -62,12 +74,20 @@ public class DepartmentFormController implements Initializable {
 		try {
 			entity = getFormData();
 			service.saveOrUpdate(entity);
+			notifyDataChangeListener();
 			Utils.currentStage(event).close();
 		} catch (DBException e) {
 			Alerts.showAlert("Erro saving objeto", null, e.getMessage(), AlertType.ERROR);
 		}
 	}
 	
+	// quando houver uma alteração este será o metódo reponsável por notificar
+	private void notifyDataChangeListener() {
+		for(DataChangeListener listener: dataChangeListener ) {
+			listener.onDataChange();
+		}
+	}
+
 	private Department getFormData() {
 		Department obj = new Department();
 		
