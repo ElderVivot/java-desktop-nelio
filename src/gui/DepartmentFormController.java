@@ -3,7 +3,9 @@ package gui;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import db.DBException;
 import gui.listener.DataChangeListener;
@@ -18,6 +20,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import model.entities.Department;
+import model.exceptions.ValidationException;
 import model.services.DepartmentService;
 
 public class DepartmentFormController implements Initializable {
@@ -76,6 +79,8 @@ public class DepartmentFormController implements Initializable {
 			service.saveOrUpdate(entity);
 			notifyDataChangeListener();
 			Utils.currentStage(event).close();
+		} catch (ValidationException e) {
+			setErrorMessages(e.getErrors());
 		} catch (DBException e) {
 			Alerts.showAlert("Erro saving objeto", null, e.getMessage(), AlertType.ERROR);
 		}
@@ -91,10 +96,22 @@ public class DepartmentFormController implements Initializable {
 	private Department getFormData() {
 		Department obj = new Department();
 		
+		// instancia a validação
+		ValidationException exception = new ValidationException("Validate error");
+		
 		// o txtId não é permitido o usuário digitar, e estamos buscando por ele. Analistar melhor o pq disto, pq acho
 		// que ele é autoincrement no banco, por isso que está dando certo esta operação
 		obj.setId(Utils.tryParseToInt(txtId.getText()));
+		
+		if(txtName.getText() == null || txtName.getText().trim().equals("")) {
+			exception.addError("name", "O campo nome não pode ser vazio.");
+		}
 		obj.setName(txtName.getText());
+		
+		// lanço a exceção caso encontre erros
+		if(exception.getErrors().size() > 0) {
+			throw exception;
+		}
 		
 		return obj;
 	}
@@ -123,5 +140,14 @@ public class DepartmentFormController implements Initializable {
 		// quando carregar o update já seta como padrão a entidade que estou alterando
 		txtId.setText(String.valueOf(entity.getId()));
 		txtName.setText(entity.getName());
+	}
+	
+	// seta o erro na Label
+	private void setErrorMessages(Map<String, String> errors) {
+		Set<String> fields = errors.keySet();
+		
+		if(fields.contains("name")) {
+			labelErrorName.setText(errors.get("name"));
+		}
 	}
 }
